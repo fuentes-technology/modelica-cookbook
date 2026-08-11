@@ -1,0 +1,27 @@
+// Template for the author-modelica-model skill. Fill every {{PLACEHOLDER}} before running with:
+//   omc checkpoints.mos
+//
+// {{LOAD_MSL}} — leave as `loadModel(Modelica); getErrorString();` if the model depends on the
+// Modelica Standard Library, otherwise delete that line entirely.
+//
+// {{MODEL_FILE}} — use forward slashes or escaped backslashes (e.g. "C:/models/Foo.mo" or
+// "C:\\models\\Foo.mo"). A raw Windows path breaks the string literal.
+//
+// {{RESULT_PREFIX}} — a short name, no extension. simulate() has no resultFile parameter and
+// fails outright if one is passed; omc derives "<prefix>_res.csv" from fileNamePrefix itself.
+{{LOAD_MSL}}
+
+"===LOAD===";
+
+loadFile("{{MODEL_FILE}}");
+getErrorString();
+
+"===CHECK===";
+
+checkModel({{MODEL_NAME}});
+getErrorString();
+
+"===SIMULATE===";
+
+simulate({{MODEL_NAME}}, stopTime={{STOP_TIME}}, tolerance={{SIM_TOLERANCE}}, outputFormat="csv", fileNamePrefix="{{RESULT_PREFIX}}");
+getErrorString();

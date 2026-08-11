@@ -1,0 +1,14 @@
+{
+  "name": "modelica-cookbook",
+  "version": "0.1.0",
+  "owner": {
+    "name": "Javier Fuentes"
+  },
+  "plugins": [
+    {
+      "name": "modelica-skills",
+      "description": "Plugin for authoring and validating Modelica models with OpenModelica",
+      "source": "./"
+    }
+  ]
+}
