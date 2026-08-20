@@ -4,12 +4,7 @@ description: Authors a Modelica model (.mo file) and validates it with OpenModel
 disable-model-invocation: true
 ---
 
-Writes a Modelica model (.mo file), then tests it with OpenModelica's `omc`. The model has to load before it can pass the two checkpoints that matter:
-
-- **check**: parses and verifies the model is balanced
-- **simulate**: runs it end to end
-
-A model isn't done until it loads cleanly and passes both checkpoints. If any step fails, fix the problem and rerun. Never hand back code that hasn't been checked. Stop after three fix/rerun cycles total without a full pass, and report the remaining error to the user instead of looping indefinitely.
+Writes a Modelica model (.mo file), then tests it with OpenModelica's `omc`. See [`../shared/checkpoint-loop.md`](../shared/checkpoint-loop.md) for the checkpoint loop this skill follows.
 
 ## 1. Locate omc
 
@@ -23,17 +18,14 @@ Run `loadModel(Modelica); getVersion(Modelica); getErrorString(); getModelicaPat
 
 ## 3. Resolve the model
 
-Pin down what to write before touching a file:
+Work through the shared checklist in [`../shared/resolve-modelica-model.md`](../shared/resolve-modelica-model.md), plus two things specific to this `omc`-CLI backend:
 
-- The target `.mo` file path and the fully-qualified model name — reuse the existing file/model when the user says "modify" or "update", otherwise create both.
-- Whether the target file already exists on disk — if the user said "create" but a file already sits at that path, confirm with them before overwriting it rather than assuming their phrasing is right. If it already defines other models and the user's request doesn't make clear which one to touch, ask.
-- The model's components, parameters, variables, and equations (or `connect` statements, for a composed model) from the user's request.
+- The target `.mo` file path — reuse the existing file when the user says "modify" or "update", otherwise create it.
 - A result-file prefix for the simulation, no extension — `omc` appends `_res.<format>` itself (e.g. prefix `Foo` → `Foo_res.csv`).
-- A stop time and tolerance for the simulation, if the user gave them — otherwise omit these arguments later and let `omc` use its own defaults.
 
 ## 4. Write the model
 
-Create or edit the `.mo` file with the resolved model. Match the style, units, and naming already used in the file or in sibling models in the project rather than inventing new conventions. Don't reinvent the wheel: browse the MSL install path from [step 2](#2-locate-the-modelica-standard-library) for components and connectors that fit, and reuse them instead of writing custom equations for something MSL already models.
+Create or edit the `.mo` file with the resolved model, following [`../shared/model-authoring-style.md`](../shared/model-authoring-style.md) — browse the MSL install path from [step 2](#2-locate-the-modelica-standard-library) for components and connectors that fit.
 
 ## 5. Build the checkpoints script
 
@@ -41,7 +33,7 @@ Copy [`references/checkpoints.mos`](references/checkpoints.mos) to the scratchpa
 
 ## 6. Run the check checkpoint
 
-Run `omc checkpoints.mos` with the scratchpad as the current working directory — `omc` writes its generated files wherever it's invoked from, not necessarily next to the script. Then read the sections in order. `===LOAD===` first: any error there means the file didn't load (bad path, syntax error) and the `===CHECK===` section that follows isn't meaningful; fix the load problem and rerun from [step 5](#5-build-the-checkpoints-script). Once load is clean, read `===CHECK===`. Pass means `checkModel` reports 0 errors — warnings don't fail the checkpoint, but surface them in the report. On failure, fix the model ([step 4](#4-write-the-model)) using the error text and rerun from [step 5](#5-build-the-checkpoints-script); don't run the simulate checkpoint on a model that hasn't passed check.
+Run `omc checkpoints.mos` with the scratchpad as the current working directory — `omc` writes its generated files wherever it's invoked from, not necessarily next to the script. Then read the sections in order. `===LOAD===` first: any error there means the file didn't load (bad path, syntax error) and the `===CHECK===` section that follows isn't meaningful; fix the load problem and rerun from [step 5](#5-build-the-checkpoints-script). Once load is clean, read `===CHECK===` against the pass criteria in [`../shared/checkpoint-loop.md`](../shared/checkpoint-loop.md). On failure, fix the model ([step 4](#4-write-the-model)) using the error text and rerun from [step 5](#5-build-the-checkpoints-script).
 
 ## 7. Run the simulate checkpoint
 
@@ -49,14 +41,12 @@ Read the `===SIMULATE===` section from the same run. Pass means the `simulate()`
 
 ## 8. Report
 
-Always produce a summary that includes:
+Work through the shared checklist in [`../shared/report-checklist.md`](../shared/report-checklist.md), plus two things specific to this `omc`-CLI backend:
 
-- The target `.mo` file path and whether it was created or modified.
-- The `omc` version used ([step 1](#1-locate-omc)).
-- The MSL version it was validated against ([step 2](#2-locate-the-modelica-standard-library)).
-- How many fix/rerun cycles it took (if any).
-- Pass/fail for whichever steps ran, with the raw error text for anything that ultimately failed.
-- If simulation passed, a substantive line about the result — e.g. the final value of a key variable, or how a state changed over the simulated time span — not just pass/fail. Read `<prefix>_res.csv` for this before it's cleaned up ([step 9](#9-clean-up-build-artifacts)).
+- The target `.mo` file path.
+- The `omc` version used ([step 1](#1-locate-omc)) and the MSL version it was validated against ([step 2](#2-locate-the-modelica-standard-library)).
+
+For the shared checklist's substantive result line, read `<prefix>_res.csv` before it's cleaned up ([step 9](#9-clean-up-build-artifacts)).
 
 ## 9. Clean up build artifacts
 
